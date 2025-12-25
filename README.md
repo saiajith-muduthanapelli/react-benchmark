@@ -2,7 +2,7 @@
 
 This repository contains a set of focused React benchmark tasks that demonstrate real-world frontend bugs and their correct fixes, validated using automated tests.
 
-Instead of building a full app, this project isolates common failure modes in React—performance issues, stale state, and async correctness—and shows how to fix them intentionally and testably.
+Instead of building a full app, this project isolates common failure modes in React—performance issues, stale state, async correctness and shows how to fix them intentionally and testably.
 
 ## Why this project?
 
