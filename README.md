@@ -1,325 +1,136 @@
-# React Benchmark
+# React Benchmark – Real-World Bugs & Fixes
 
-A structured system for isolating, demonstrating, and learning React performance and behavioral issues through runnable code examples and comprehensive test suites.
+This repository contains a set of focused React benchmark tasks that demonstrate real-world frontend bugs and their correct fixes, validated using automated tests.
 
-## Purpose
+Instead of building a full app, this project isolates common failure modes in React—performance issues, stale state, and async correctness—and shows how to fix them intentionally and testably.
 
-This project serves as a reference implementation and learning tool for React developers. Each benchmark task isolates a specific problem pattern—performance anti-patterns, hook misuse, rendering inefficiencies, memory leaks—and demonstrates both the buggy code and the corrected implementation with accompanying tests.
+## Why this project?
 
-The goal is to:
+Many React issues only appear in production:
 
-- Build intuition around React rendering mechanics and performance characteristics
-- Provide reproducible examples of common mistakes and their solutions
-- Enable systematic testing and validation of fixes
-- Scale from a handful of examples to hundreds of benchmarking scenarios
-- Serve as a training resource and architectural reference
+- Unnecessary re-renders
+- Stale closures
+- Async race conditions
+- Over-fetching due to user input
 
-## Benchmark Task Structure
-
-Each task is an independent, self-contained unit that focuses on a single problem. The structure ensures consistency and scalability:
-
-- **Task Naming**: `task-N-feature-name` where N is a task number (optionally zero-padded) and the feature name describes the problem in kebab-case
-- **Fixed Directory Layout**: Every task contains the same four components—buggy implementation, fixed implementation, test suite, and documentation
-- **One Problem Per Task**: Each task isolates a single issue to keep scope manageable and learning focused
-- **Numbering Strategy**: Tasks are numbered with gaps to allow insertion of new tasks without renumbering existing ones
-
-This structure enables the benchmark to scale from a handful of tasks to hundreds while maintaining clarity and consistency. Each task is a complete unit that can be studied, tested, and understood independently.
+This project demonstrates how those bugs happen and how to fix them properly, with tests that prove the behavior change.
 
 ## Project Structure
 
-The project is organized around **benchmark tasks**, each representing a single, well-defined problem.
-
-### Task Organization
-
 ```
-src/tasks/
-├── task-01-memo-optimization/
-│   ├── buggy/Component.tsx              # Problematic implementation
-│   ├── fixed/Component.tsx              # Corrected implementation
-│   ├── tests/Component.test.tsx         # Validation tests
-│   └── README.md                        # Problem explanation & learning notes
-├── task-02-useeffect-stale-dependency/
-│   └── (same structure)
-├── task-03-async-race-condition/
-│   └── (same structure)
-├── task-04-debounce-and-cancellation/
-│   └── (same structure)
-└── task-0X-feature-name/
-    └── (same structure)
+src/
+  tasks/
+    task-01-memo-optimization/
+    task-02-useeffect-stale-dependency/
+    task-03-async-race-condition/
+    task-04-debounce-and-cancellation/
 ```
 
-### Naming Convention
+Each task follows the same structure:
 
-Tasks follow the pattern: `task-N-feature-name`
+```
+task-XX-*/
+  buggy/Component.tsx        // Demonstrates the bug
+  fixed/Component.tsx        // Correct implementation
+  tests/Component.test.tsx   // Tests that prove the bug and the fix
+```
 
-- **N**: Task number (e.g. 1, 01, 10, 100)
-- **feature-name**: Kebab-case description of the problem
-
-Example: `task-01-memo-optimization`, `task-02-useeffect-stale-dependency`, `task-03-async-race-condition`, `task-04-debounce-and-cancellation`
-
-### Inside Each Task
-
-**buggy/Component.tsx**
-- Original buggy implementation with inline comments highlighting the issue
-- Realistic code patterns that developers actually write
-- Demonstrates the problem clearly
-
-**fixed/Component.tsx**
-- Corrected implementation with comments explaining the fix
-- Follows React best practices
-- Same functionality as buggy version, but correct
-
-**tests/Component.test.tsx**
-- Unit tests verifying both versions
-- Demonstrates that the bug exists in the buggy version
-- Validates that the fix resolves the issue
-- Covers edge cases
-
-**README.md**
-- Detailed explanation of the bug and its impact
-- Why the issue occurs (React mechanics involved)
-- How the fix works
-- Key takeaways for learning
-
-### Shared Utilities
-
-## Understanding Buggy vs Fixed vs Tests
-
-### buggy/Component.tsx
-
-The buggy implementation contains the problematic code you'll encounter in real applications. It includes inline comments that clearly mark the issue and explain why it's a problem. The goal is not to obscure the bug, but to create realistic code that illustrates common mistakes developers make. Each buggy component is focused on a single, well-defined problem to keep the learning scope manageable.
-
-### fixed/Component.tsx
-
-The fixed implementation shows the corrected version of the same component. Comments explain what changed and why the fix resolves the issue. The fixed version follows React best practices and maintains identical functionality to the buggy version—the only difference is that it works correctly.
-
-### tests/Component.test.tsx
-
-Tests validate both implementations:
-- They verify that the buggy version exhibits the expected problem
-- They confirm that the fixed version resolves the issue
-- They cover edge cases and ensure the fix is robust
-
-Tests are the specification: they define what the problem is and what correctness looks like.
-
-## Tasks
-
-Each task lives under `src/tasks/task-0X-*/` and includes:
-- `buggy/Component.tsx`
-- `fixed/Component.tsx`
-- `tests/Component.test.tsx`
+## Tasks Overview
 
 ### Task 01: Memo Optimization
 
-**Problem description**
-- A parent component passes a callback to a memoized child.
-- The callback is recreated on every parent render, so the memoized child re-renders even when its “meaning” didn’t change.
+**Problem:**
+An expensive child component re-renders unnecessarily whenever the parent state updates.
 
-**Buggy behavior**
-- Updating an unrelated parent state (like a counter) still re-renders the expensive/memoized child.
-- You’ll typically observe extra logs / work that shouldn’t happen.
+**Buggy behavior:**
+- Child re-renders on every parent update
+- Wastes CPU on expensive computations
 
-**Fix / solution**
-- Keep the callback reference stable (e.g. `useCallback`) and ensure memoization boundaries are effective.
+**Fix:**
+- Used `React.memo` and `useCallback`
+- Child only re-renders when its props actually change
 
-**What this demonstrates**
-- Referential equality matters for `React.memo`.
-- Performance bugs can be “invisible” in UI but obvious in render frequency.
+**What this demonstrates:**
+- React render behavior
+- Memoization and performance optimization
+- Preventing unnecessary re-renders
 
 ### Task 02: useEffect Stale Dependency
 
-**Problem description**
-- A component fetches data in `useEffect` but forgets a dependency.
-- When `userId` changes, the effect doesn’t re-run, so the UI shows stale data.
+**Problem:**
+Component does not update correctly when props change due to missing dependencies in `useEffect`.
 
-**Buggy behavior**
-- Initial user loads correctly.
-- Changing `userId` does not update the displayed user.
+**Buggy behavior:**
+- UI shows stale data
+- Effect does not re-run when expected
 
-**Fix / solution**
-- Include the changing value (e.g. `userId`) in the dependency array so the effect re-runs for new inputs.
+**Fix:**
+- Correct dependency array usage
+- Ensured state updates reflect latest props
 
-**What this demonstrates**
-- Missing dependencies create silent correctness bugs.
-- Effects should be modeled as “sync state with inputs,” not “run once.”
+**What this demonstrates:**
+- Stale closures
+- Correct `useEffect` dependency management
 
 ### Task 03: Async Race Condition
 
-**Problem description**
-- The component fetches user data based on `userId`.
-- When `userId` changes quickly, multiple requests are in flight.
-- Responses can arrive out of order.
+**Problem:**
+Multiple async requests race, allowing older (slower) responses to overwrite newer state.
 
-**Buggy behavior**
-- A slower, older request can resolve after a faster, newer request.
-- The older response overwrites state, so the UI shows the wrong user.
+**Buggy behavior:**
+- UI shows incorrect or outdated data
+- Latest user action is ignored
 
-**Fix / solution**
-- Cancel stale requests (commonly with `AbortController` in effect cleanup).
-- Treat aborts as expected and don’t surface them as “real errors.”
+**Fix:**
+- Ensured only the latest async request updates state
+- Prevented stale responses from winning
 
-**What this demonstrates**
-- Correctness under concurrency: “latest input wins.”
-- Cleanup functions are essential for safe async effects.
+**What this demonstrates:**
+- Async correctness
+- Race condition handling in React
 
 ### Task 04: Debounce & Cancellation
 
-**Problem description**
-- A search box triggers an async fetch based on typed input.
-- Without debouncing and cancellation/guarding, fast typing causes many requests and stale UI.
+**Problem:**
+Search input fires requests on every keystroke and can display stale results.
 
-**Buggy behavior**
-- Fetch runs on every keystroke.
-- A slower response for an older query can overwrite results for the latest query.
+**Buggy behavior:**
+- Excessive network calls
+- Older results overwrite newer input
 
-**Fix / solution**
-- Debounce input (e.g. 300ms) before firing requests.
-- Cancel or ignore stale requests so only the latest query can update the UI.
+**Fix:**
+- Debounced user input
+- Cancelled or ignored stale async requests
+- Only latest user intent updates the UI
 
-**What this demonstrates**
-- Debounce reduces network chatter; cancellation/guards preserve correctness.
-- Timing-dependent bugs are testable with fake timers.
+**What this demonstrates:**
+- Debouncing
+- Async cancellation
+- Real-world search/input behavior
 
-## Running Tests
+## Testing
 
-### Run All Tests
+All tasks are validated using Vitest and React Testing Library.
 
-```bash
-npm test
-```
-
-Runs the full test suite against all task implementations.
-
-### Run Tests for Specific Tasks
+Run all tests:
 
 ```bash
-npx vitest run src/tasks/task-01-memo-optimization/tests/Component.test.tsx
+npm install
+npx vitest run
 ```
 
-Runs tests for a specific task test file.
+Expected result:
 
-### Interactive Test UI
-
-```bash
-npm test:ui
+```
+Test Files  4 passed
+Tests       15 passed
 ```
 
-Opens Vitest's interactive UI for exploring test results and debugging.
+## Key Takeaway
 
-### Development Server
+This project focuses on how React fails in real applications and how to fix those failures deliberately, with tests that prove the improvement.
 
-```bash
-npm run dev
-```
-
-Starts a Vite dev server with HMR. Navigate to `src/App.tsx` to browse available benchmarks.
-
-## Tech Stack
-
-- **React 19** with TypeScript
-- **Vite** for build tooling and dev server
-- **Vitest** for unit testing
-- **Testing Library** for component testing
-- **ESLint** with TypeScript support
-
-## Extending the Project
-
-### Adding a New Task
-
-1. **Copy the template folder**:
-   - Duplicate `src/tasks/Template/`
-   - Rename it to `src/tasks/task-0X-your-task-name/`
-   - Update `meta.json` and `README.md` inside the new task folder
-
-2. **Implement the buggy version** (`buggy/Component.tsx`):
-   - Write code that exhibits the problem
-   - Add comments explaining the bug
-   - Keep it focused on a single issue
-
-3. **Implement the fixed version** (`fixed/Component.tsx`):
-   - Correct the implementation
-   - Comment the changes and explain why they work
-   - Maintain the same external interface as the buggy version
-
-4. **Write comprehensive tests** (`tests/Component.test.tsx`):
-   - Test both buggy and fixed versions
-   - Demonstrate the problem exists in the buggy version
-   - Verify the fix works
-   - Include edge cases
-
-5. **Document the task** (`README.md`):
-   - Explain the bug clearly with examples
-   - Describe the impact (performance, correctness, etc.)
-   - Explain the solution and why it works
-   - Provide learning takeaways
-
-### Choosing Task Numbers
-
-Plan your task numbering strategically to leave room for insertion:
-
-- **001-010**: React fundamentals (state, props, lifecycle)
-- **011-020**: Common hooks (useState, useEffect, useContext)
-- **021-030**: Performance optimization (memo, callback, useMemo)
-- **031-040**: List rendering and keys
-- **041-050**: Event handling and closures
-- **051-060**: Memory leaks and cleanup
-
-## Why Consistency Matters for Benchmark Evaluation
-
-A benchmark system only provides reliable data when its structure and methodology are consistent. This project maintains strict consistency at multiple levels:
-
-### Structural Consistency
-
-Every task follows the same directory layout and file naming conventions. This uniformity allows you to:
-
-- **Compare apples to apples**: Each buggy/fixed pair demonstrates the same pattern of problem and solution
-- **Automate analysis**: Consistent structure enables scripting, test runners, and analysis tools that operate across all tasks
-- **Scale without degradation**: Adding the 50th task is as straightforward as adding the 5th because the structure never changes
-- **Reduce cognitive overhead**: You always know where to find the buggy implementation, the tests, and the documentation
-
-### Problem Isolation
-
-Each task contains exactly one problem. This prevents confounding factors:
-
-- **Single variable per benchmark**: When a task has one issue, you can measure the impact of that specific problem
-- **Clear causation**: Fixed results improve predictably because only the identified issue changed
-- **Replicable patterns**: Future developers can reproduce the same problem independently because it's clearly defined
-
-### Test Specification
-
-Tests define the problem formally. This creates an objective benchmark:
-
-- **Tests are the source of truth**: What the tests verify is what the task demonstrates
-- **Reproducibility**: Tests can be run identically across environments and time
-- **Objective pass/fail**: No ambiguity about whether a fix is correct
-
-### Numbering Discipline
-
-The task numbering scheme (with gaps by design) maintains order and allows growth:
-
-- **Easy to reference**: `task-015-use-state-batching` is self-explanatory
-- **Room to grow**: New tasks can be inserted without renumbering existing ones
-- **Logical progression**: Lower numbers typically cover fundamentals; higher numbers cover advanced patterns
-- **No arbitrary reorganization**: Once a task has a number, it stays stable
-
-### How This Enables Reliable Benchmarking
-
-Without consistency:
-
-- ❌ Different tasks might test different aspects at different scales
-- ❌ You'd have no way to compare performance improvements across tasks
-- ❌ Adding new tasks would introduce format variations that make automated analysis difficult
-- ❌ Results would be hard to replicate or validate
-
-With consistency:
-
-- ✅ Each task measures a discrete, identifiable problem
-- ✅ Results are comparable across the benchmark suite
-- ✅ Automated tooling can process all tasks uniformly
-- ✅ Results are verifiable and reproducible
-
-The consistency standards in this project aren't arbitrary—they serve the purpose of creating a reliable, scalable benchmarking system where the signal isn't buried by noise.
-- **061-070**: Advanced hooks and patterns
+It is intentionally task-based and minimal, prioritizing clarity over boilerplate.
 - **071-100**: Complex scenarios and edge cases
 
 This numbering allows you to insert new tasks between existing ones without renumbering.
