@@ -158,4 +158,4 @@ This numbering allows you to insert new tasks between existing ones without renu
 - Components are functional components with hooks (no class components)
 - Tests use Vitest and React Testing Library
 - Code follows ESLint configuration defined in `eslint.config.js`
-- Task numbering uses zero-padded three-digit format (001, 002, ..., 100)
+- Task numbering uses zero-padded two-digit format (01, 02, ..., 100)
